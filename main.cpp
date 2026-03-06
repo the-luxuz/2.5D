@@ -13,13 +13,29 @@
 #define map_x 10
 #define map_y 10
 
-#define PI 3.141592653589793238462643383279502884 
+#define Player_R 5
+
+#define PI 3.141592653589793238462643383279502884
+
+bool not_w = false;
+float ray_x;
+float ray_y;
 
 class Vector2{
     public:
         float x, y;
 };
 
+bool is_wall(float x, float y, int (&map)[map_y][map_x]) {
+
+    int cell_x = (int)(x / Wall_size);
+    int cell_y = (int)(y / Wall_size);
+
+    if(cell_x < 0 || cell_x >= map_x || cell_y < 0 || cell_y >= map_y)
+        return true;
+
+    return map[cell_y][cell_x] == 1;
+}
 
 double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][map_x], float angle){
     
@@ -28,8 +44,8 @@ double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][
 
     while(dist < Max_Render){
 
-        float ray_x = player_pos.x + SDL_cosf(angle) * dist;
-        float ray_y = player_pos.y + SDL_sinf(angle) * dist;
+        ray_x = player_pos.x + SDL_cosf(angle) * dist;
+        ray_y = player_pos.y + SDL_sinf(angle) * dist;
 
         int cell_pos_x = (int)(ray_x / Wall_size);
         int cell_pos_y = (int)(ray_y / Wall_size);
@@ -42,6 +58,7 @@ double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][
         if(map[cell_pos_y][cell_pos_x] == 1){
             return dist;
         }
+
         dist += step;
     }
 
@@ -146,27 +163,62 @@ int main(int argc, char *argv[]){
 
         float speed = 150.0f * deltaTime;
 
-        if (keystate[SDL_SCANCODE_W]) {
-            player_pos.x += SDL_cosf(player_angle) * speed;
-            player_pos.y += SDL_sinf(player_angle) * speed;
+        if (keystate[SDL_SCANCODE_W]){
+
+            float new_x = player_pos.x + SDL_cosf(player_angle) * speed;
+            float new_y = player_pos.y + SDL_sinf(player_angle) * speed;
+
+            if(!is_wall(new_x + Player_R, player_pos.y, map) && !is_wall(new_x - Player_R, player_pos.y, map)){
+                player_pos.x = new_x;
+            }
+
+            if(!is_wall(player_pos.x, new_y + Player_R, map) && !is_wall(player_pos.x, new_y - Player_R, map)){
+                player_pos.y = new_y;
+            }
         }
 
         if (keystate[SDL_SCANCODE_S]) {
-            player_pos.x -= SDL_cosf(player_angle) * speed;
-            player_pos.y -= SDL_sinf(player_angle) * speed;
+
+            float new_x = player_pos.x - SDL_cosf(player_angle) * speed;
+            float new_y = player_pos.y - SDL_sinf(player_angle) * speed;
+
+            if(!is_wall(new_x + Player_R, player_pos.y, map) && !is_wall(new_x - Player_R, player_pos.y, map)){
+                player_pos.x = new_x;
+            }
+
+            if(!is_wall(player_pos.x, new_y + Player_R, map) && !is_wall(player_pos.x, new_y - Player_R, map)){
+                player_pos.y = new_y;
+            }
         }
 
         if (keystate[SDL_SCANCODE_A]) {
-            player_pos.x += SDL_cosf(player_angle - PI/2) * speed;
-            player_pos.y += SDL_sinf(player_angle - PI/2) * speed;
+
+            float new_x = player_pos.x + SDL_cosf(player_angle - PI/2) * speed;
+            float new_y = player_pos.y + SDL_sinf(player_angle - PI/2) * speed;
+
+            if(!is_wall(new_x + Player_R, player_pos.y, map) && !is_wall(new_x - Player_R, player_pos.y, map)){
+                player_pos.x = new_x;
+            }
+
+            if(!is_wall(player_pos.x, new_y + Player_R, map) && !is_wall(player_pos.x, new_y - Player_R, map)){
+                player_pos.y = new_y;
+            }
         }
 
         if (keystate[SDL_SCANCODE_D]) {
-            player_pos.x += SDL_cosf(player_angle + PI/2) * speed;
-            player_pos.y += SDL_sinf(player_angle + PI/2) * speed;
+
+            float new_x = player_pos.x + SDL_cosf(player_angle + PI/2) * speed;
+            float new_y = player_pos.y + SDL_sinf(player_angle + PI/2) * speed;
+
+            if(!is_wall(new_x + Player_R, player_pos.y, map) && !is_wall(new_x - Player_R, player_pos.y, map)){
+                player_pos.x = new_x;
+            }
+
+            if(!is_wall(player_pos.x, new_y + Player_R, map) && !is_wall(player_pos.x, new_y - Player_R, map)){
+                player_pos.y = new_y;
+            }
         }
 
-        // en vez de dibujar directamente al render, dibujas por cpu a una textura
         SDL_SetRenderTarget(render, texture);
         SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
         SDL_RenderClear(render);
@@ -174,14 +226,13 @@ int main(int argc, char *argv[]){
 
         draw_walls(render, texture, player_pos, player_angle, map);
 
-        // vuelves a render y pegas la imagen de la textura a render
         SDL_SetRenderTarget(render, NULL);
         SDL_RenderCopy(render, texture, NULL, NULL);
         SDL_RenderPresent(render);
 
         frame_count++;
         Uint32 fps_current_time = SDL_GetTicks();
-        if (fps_current_time - fps_last_time >= 1000) { // cada 1 segundo
+        if (fps_current_time - fps_last_time >= 1000) {
             fps = frame_count * 1000.0f / (fps_current_time - fps_last_time);
             frame_count = 0;
             fps_last_time = fps_current_time;
