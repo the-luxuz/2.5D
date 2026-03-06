@@ -17,9 +17,6 @@
 
 #define PI 3.141592653589793238462643383279502884
 
-bool not_w = false;
-float ray_x;
-float ray_y;
 
 class Vector2{
     public:
@@ -44,8 +41,8 @@ double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][
 
     while(dist < Max_Render){
 
-        ray_x = player_pos.x + SDL_cosf(angle) * dist;
-        ray_y = player_pos.y + SDL_sinf(angle) * dist;
+        float ray_x = player_pos.x + SDL_cosf(angle) * dist;
+        float ray_y = player_pos.y + SDL_sinf(angle) * dist;
 
         int cell_pos_x = (int)(ray_x / Wall_size);
         int cell_pos_y = (int)(ray_y / Wall_size);
