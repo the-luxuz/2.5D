@@ -38,6 +38,8 @@ bool is_wall(float x, float y, int (&map)[map_y][map_x]) {
     return map[cell_y][cell_x] == 1;
 }
 
+int color;
+
 double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][map_x], float angle){
     
     double dist = 0.0f;
@@ -57,6 +59,10 @@ double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][
         }
 
         if(map[cell_pos_y][cell_pos_x] == 1){
+            color = 1;
+            return dist;
+        }else if(map[cell_pos_y][cell_pos_x] == 2){
+            color = 2;
             return dist;
         }
 
@@ -67,53 +73,71 @@ double check_walls(SDL_Renderer* render, Vector2& player_pos, int (&map)[map_y][
 
 }
 
-void draw_walls(SDL_Renderer* render, SDL_Texture* texture, Vector2 player_pos, float player_angle, int (&map)[map_y][map_x], float camz){
+Uint8 r = 0, g = 0, b = 0;
+
+void draw_walls(SDL_Renderer* render, Vector2 player_pos, float player_angle, int (&map)[map_y][map_x], float camz){
 
     float FOV_angle = FOV * PI / 180.0f;
+    float half_height = Window_Height / 2.0f;
+    float proj_dist = half_height / SDL_tan(FOV_angle / 2.0f);
 
-    for (int column = 0; column < Window_Width; column++){
+    for(int x = 0; x < Window_Width; x++){
 
-        float ray_angle = player_angle - FOV_angle/2 + (column / (float)Window_Width) * FOV_angle;
+        float ray_angle = player_angle - FOV_angle/2 + (x / (float)Window_Width) * FOV_angle;
 
-        double distance = check_walls(render, player_pos, map, ray_angle);
+        double distance = check_walls(nullptr, player_pos, map, ray_angle);
 
-        float perp_dist = distance * SDL_cos(ray_angle - player_angle);
-
-        if(distance <= 0) {
+        if(distance <= 0)
             continue;
+
+        float wall_perp = distance * SDL_cos(ray_angle - player_angle);
+
+        int wall_top = half_height - ((Wall_top - camz) * proj_dist / wall_perp);
+        int wall_bot = half_height - ((Wall_bot - camz) * proj_dist / wall_perp);
+        
+        wall_top = SDL_max(0, wall_top);
+        wall_bot = SDL_min(Window_Height-1, wall_bot);
+
+        float shade = SDL_max(0.2f, 1.0f - wall_perp/Max_Render);
+
+        if(color == 1){
+            r = 200 * shade;
+            g = 50 * shade;
+            b = 50 * shade;
+        }
+        else if(color == 2){
+            r = 50 * shade;
+            g = 200 * shade;
+            b = 50 * shade;
         }
 
-        int wall_height = (int)(Window_Height * Wall_size / perp_dist);
+        // walls
+        SDL_SetRenderDrawColor(render, r, g, b, 255);
+        SDL_RenderDrawLine(render, x, wall_top, x, wall_bot);
 
-        float proy_dist = (Window_Width / 2.0f) / SDL_tan(FOV_angle/2);
+        // top walls
+        SDL_SetRenderDrawColor(render, 80, 80, 200, 255);
+        SDL_RenderDrawLine(render, x, 0, x, wall_top-1);
 
-        float top_y = Window_Height/2.0f - ((Wall_top - camz) * proy_dist / perp_dist);
-        float bot_y = Window_Height/2.0f - ((Wall_bot - camz) * proy_dist / perp_dist);
-
-        int shade = (int)(SDL_max(0.0, 255.0 - (distance)));
-
-        SDL_Rect rect = { column, (int)top_y, 1, (int)(bot_y - top_y)};
-
-        SDL_SetRenderDrawColor(render, shade, shade, shade, 255);
-
-        SDL_RenderFillRect(render, &rect);
-
+        // bottom walls
+        SDL_SetRenderDrawColor(render, 150, 100, 50, 255);
+        SDL_RenderDrawLine(render, x, wall_bot+1, x, Window_Height-1);
     }
 }
 
 int main(int argc, char *argv[]){
 
     int map[map_y][map_x] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-        1, 0, 0, 1, 0, 0, 0, 1, 0, 0,
-        0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
-        0, 0, 0, 0, 1, 1, 0, 0, 0, 0,
-        0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 0, 1, 0, 0, 1, 1, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 1, 0, 0, 1, 0, 0, 1, 2,
+        2, 0, 0, 1, 0, 0, 0, 1, 0, 2,
+        2, 1, 1, 0, 0, 0, 0, 1, 0, 2,
+        2, 0, 0, 0, 1, 1, 0, 0, 0, 2,
+        2, 0, 1, 0, 0, 1, 0, 0, 1, 2,
+        2, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        2, 0, 1, 0, 1, 0, 0, 1, 1, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2
     };
 
     SDL_Init(SDL_INIT_VIDEO);
@@ -136,7 +160,7 @@ int main(int argc, char *argv[]){
     
     SDL_Event event;
     
-    Vector2 player_pos {0, 0};
+    Vector2 player_pos { 1.5f * Wall_size, 1.5f * Wall_size };
     float player_angle = 0;
     Uint32 lastTime = SDL_GetTicks();
 
@@ -256,7 +280,7 @@ int main(int argc, char *argv[]){
         SDL_RenderClear(render);
         
         camz = camz + jump_height;
-        draw_walls(render, texture, player_pos, player_angle, map, camz);
+        draw_walls(render, player_pos, player_angle, map, camz);
 
         SDL_SetRenderTarget(render, NULL);
         SDL_RenderCopy(render, texture, NULL, NULL);
