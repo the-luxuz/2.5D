@@ -2,6 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "lldb",
+      "request": "launch",
+      "name": "LLDB Debug",
+      "program": "${workspaceFolder}/25D.exe",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build 25D"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",

@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build 25D",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-g",
+        "-gdwarf-4",
+        "-O0",
+        "main.cpp",
+        "-IC:/SDL2/include",
+        "-LC:/SDL2/lib",
+        "-lmingw32",
+        "-lSDL2main",
+        "-lSDL2",
+        "-o",
+        "25D.exe"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}
