@@ -35,7 +35,7 @@ bool is_wall(float x, float y, int (&map)[map_y][map_x]) {
     if(cell_x < 0 || cell_x >= map_x || cell_y < 0 || cell_y >= map_y)
         return true;
 
-    return map[cell_y][cell_x] == 1;
+    return map[cell_y][cell_x] == 1 || map[cell_y][cell_x] == 2;
 }
 
 int color;
